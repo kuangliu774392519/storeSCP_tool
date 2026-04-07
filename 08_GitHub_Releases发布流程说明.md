@@ -1,6 +1,6 @@
 # GitHub Releases 发布流程说明
 
-最后更新时间：2026-04-04  
+最后更新时间：2026-04-07  
 适用仓库：`git@github.com:kuangliu774392519/storeSCP_tool.git`  
 文档类型：活文档
 
@@ -64,7 +64,7 @@ StorescpTool_win-x64_portable_<version>.sha256.txt
 示例：
 
 ```powershell
-.\scripts\Publish-StorescpTool.ps1 -Configuration Release -Runtime win-x64 -CreatePortableZip -PackageVersion 0.1.0
+.\scripts\Publish-StorescpTool.ps1 -Configuration Release -Runtime win-x64 -CreatePortableZip -PackageVersion 0.1.2
 ```
 
 默认行为：
@@ -100,8 +100,8 @@ StorescpTool_win-x64_portable_<version>.sha256.txt
 5. 创建版本 tag，例如：
 
 ```powershell
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 6. 等待 GitHub Actions 完成
