@@ -72,11 +72,14 @@ public sealed class StoreScpService : IStoreScpService
 
         if (_server.Exception is null)
         {
-            _logService.Info("StoreSCP", $"StoreSCP started on {(string.IsNullOrWhiteSpace(effectiveConfig.ListenIp) ? "0.0.0.0" : effectiveConfig.ListenIp)}:{effectiveConfig.ListenPort}, AE={effectiveConfig.LocalAeTitle}");
+            _logService.Info(
+                "StoreSCP",
+                $"StoreSCP started on {(string.IsNullOrWhiteSpace(effectiveConfig.ListenIp) ? "0.0.0.0" : effectiveConfig.ListenIp)}:{effectiveConfig.ListenPort}, AE={effectiveConfig.LocalAeTitle}",
+                "StoreSCP Host");
         }
         else
         {
-            _logService.Error("StoreSCP", "StoreSCP failed to start", _server.Exception);
+            _logService.Error("StoreSCP", "StoreSCP failed to start", _server.Exception, "StoreSCP Host");
         }
 
         return Task.CompletedTask;
@@ -89,7 +92,7 @@ public sealed class StoreScpService : IStoreScpService
             _server.Stop();
             _server.Dispose();
             _server = null;
-            _logService.Info("StoreSCP", "StoreSCP stopped");
+            _logService.Info("StoreSCP", "StoreSCP stopped", "StoreSCP Host");
         }
 
         _status = new StoreScpStatus { IsRunning = false, StatusText = "Stopped" };

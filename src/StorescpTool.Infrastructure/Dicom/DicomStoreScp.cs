@@ -21,7 +21,7 @@ public sealed class DicomStoreScp : DicomService, IDicomServiceProvider, IDicomC
 
     public void OnReceiveAbort(DicomAbortSource source, DicomAbortReason reason)
     {
-        State?.LogService.Warning("StoreSCP", $"Association aborted: {source} / {reason}");
+        State?.LogService.Warning("StoreSCP", $"Association aborted: {source} / {reason}", "Association");
         CompleteSession("Aborted", $"{source} / {reason}");
     }
 
@@ -29,12 +29,12 @@ public sealed class DicomStoreScp : DicomService, IDicomServiceProvider, IDicomC
     {
         if (exception is null)
         {
-            State?.LogService.Info("StoreSCP", "Connection closed");
+            State?.LogService.Info("StoreSCP", "Connection closed", "Association");
             CompleteSession("Closed");
         }
         else
         {
-            State?.LogService.Error("StoreSCP", "Connection closed with exception", exception);
+            State?.LogService.Error("StoreSCP", "Connection closed with exception", exception, "Association");
             CompleteSession("Faulted", exception.Message);
         }
     }
@@ -51,12 +51,13 @@ public sealed class DicomStoreScp : DicomService, IDicomServiceProvider, IDicomC
 
         State?.LogService.Info(
             "StoreSCP",
-            $"Association request from {association.CallingAE} ({association.RemoteHost}) to {association.CalledAE}");
+            $"Association request from {association.CallingAE} ({association.RemoteHost}) to {association.CalledAE}",
+            "Association");
 
         if (State?.Config.ValidateCalledAe == true &&
             !string.Equals(association.CalledAE, State.Config.LocalAeTitle, StringComparison.OrdinalIgnoreCase))
         {
-            State.LogService.Warning("StoreSCP", $"Rejected association due to Called AE mismatch: {association.CalledAE}");
+            State.LogService.Warning("StoreSCP", $"Rejected association due to Called AE mismatch: {association.CalledAE}", "Association");
             CompleteSession("Rejected", $"Called AE mismatch: {association.CalledAE}");
             return SendAssociationRejectAsync(
                 DicomRejectResult.Permanent,
@@ -77,7 +78,7 @@ public sealed class DicomStoreScp : DicomService, IDicomServiceProvider, IDicomC
 
     public Task OnReceiveAssociationReleaseRequestAsync()
     {
-        State?.LogService.Info("StoreSCP", "Association release requested");
+        State?.LogService.Info("StoreSCP", "Association release requested", "Association");
         CompleteSession("Completed");
         return SendAssociationReleaseResponseAsync();
     }
@@ -115,25 +116,25 @@ public sealed class DicomStoreScp : DicomService, IDicomServiceProvider, IDicomC
             {
                 state.ReceiveSessionService.MarkFileReceived(_sessionId, targetPath);
             }
-            state.LogService.Info("StoreSCP", $"Received DICOM instance: {targetPath}");
+            state.LogService.Info("StoreSCP", $"Received DICOM instance: {targetPath}", "C-STORE SCP");
             return new DicomCStoreResponse(request, DicomStatus.Success);
         }
         catch (Exception ex)
         {
-            State?.LogService.Error("StoreSCP", "Failed to save incoming DICOM file", ex);
+            State?.LogService.Error("StoreSCP", "Failed to save incoming DICOM file", ex, "C-STORE SCP");
             return new DicomCStoreResponse(request, DicomStatus.ProcessingFailure);
         }
     }
 
     public Task OnCStoreRequestExceptionAsync(string tempFileName, Exception e)
     {
-        State?.LogService.Error("StoreSCP", $"C-STORE parsing failed. Temp file: {tempFileName}", e);
+        State?.LogService.Error("StoreSCP", $"C-STORE parsing failed. Temp file: {tempFileName}", e, "C-STORE SCP");
         return Task.CompletedTask;
     }
 
     public Task<DicomCEchoResponse> OnCEchoRequestAsync(DicomCEchoRequest request)
     {
-        State?.LogService.Info("StoreSCP", "Received C-ECHO request");
+        State?.LogService.Info("StoreSCP", "Received C-ECHO request", "C-ECHO SCP");
         return Task.FromResult(new DicomCEchoResponse(request, DicomStatus.Success));
     }
 

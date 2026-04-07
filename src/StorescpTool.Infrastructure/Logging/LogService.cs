@@ -44,23 +44,24 @@ public sealed class LogService : ILogService
         }
     }
 
-    public void Info(string module, string message) => Add("Info", module, message);
+    public void Info(string module, string message, string dimseInfo = "") => Add("Info", module, message, dimseInfo);
 
-    public void Warning(string module, string message) => Add("Warning", module, message);
+    public void Warning(string module, string message, string dimseInfo = "") => Add("Warning", module, message, dimseInfo);
 
-    public void Error(string module, string message, Exception? exception = null)
+    public void Error(string module, string message, Exception? exception = null, string dimseInfo = "")
     {
         var finalMessage = exception is null ? message : $"{message} | {exception.Message}";
-        Add("Error", module, finalMessage);
+        Add("Error", module, finalMessage, dimseInfo);
     }
 
-    private void Add(string level, string module, string message)
+    private void Add(string level, string module, string message, string dimseInfo)
     {
         var entry = new LogEntry
         {
             Timestamp = DateTime.Now,
             Level = level,
             Module = module,
+            DimseInfo = dimseInfo,
             Message = message
         };
 
@@ -74,9 +75,13 @@ public sealed class LogService : ILogService
 
             try
             {
+                var dimseSegment = string.IsNullOrWhiteSpace(entry.DimseInfo)
+                    ? string.Empty
+                    : $" [DIMSE:{entry.DimseInfo}]";
+
                 File.AppendAllText(
                     CurrentLogFilePath,
-                    $"{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{entry.Level}] [{entry.Module}] {entry.Message}{Environment.NewLine}",
+                    $"{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{entry.Level}] [{entry.Module}]{dimseSegment} {entry.Message}{Environment.NewLine}",
                     Encoding.UTF8);
             }
             catch

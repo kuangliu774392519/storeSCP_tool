@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Collections.Generic;
 using System.Net;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StorescpTool.Application.Contracts;
@@ -21,6 +24,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IStoreScpService _storeScpService;
     private readonly IReceiveRecordService _receiveRecordService;
     private readonly IReceiveSessionService _receiveSessionService;
+    private readonly HashSet<string> _notifiedCompletedSessions = [];
 
     [ObservableProperty]
     private string localAeTitle = "RC120";
@@ -79,10 +83,18 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string operationMessage = "Ready";
 
+    [ObservableProperty]
+    private string logFilterKeyword = string.Empty;
+
+    [ObservableProperty]
+    private ReceiveRecord? selectedReceiveRecord;
+
     public ObservableCollection<string> AvailableListenIps { get; } = [];
     public ObservableCollection<LogEntry> Logs { get; } = [];
     public ObservableCollection<ReceiveRecord> ReceiveRecords { get; } = [];
     public ObservableCollection<ReceiveSessionSummary> ReceiveSessions { get; } = [];
+    public ICollectionView FilteredLogs { get; }
+    public bool HasLogFilter => !string.IsNullOrWhiteSpace(LogFilterKeyword);
 
     public MainViewModel(
         IAppConfigService configService,
@@ -104,6 +116,8 @@ public partial class MainViewModel : ObservableObject
         _storeScpService = storeScpService;
         _receiveRecordService = receiveRecordService;
         _receiveSessionService = receiveSessionService;
+        FilteredLogs = CollectionViewSource.GetDefaultView(Logs);
+        FilteredLogs.Filter = FilterLogEntry;
 
         foreach (var entry in _logService.GetEntries())
         {
@@ -205,6 +219,13 @@ public partial class MainViewModel : ObservableObject
         var result = await _networkDiagnosticsService.PingAsync(PingHost);
         NetworkResult = FormatResult(result);
         LogResult(result);
+
+        if (result.Success)
+        {
+            ShowDimseSuccessDialog(
+                "DIMSE 提示",
+                $"C-ECHO 已成功完成。\n目标: {result.Target}\n结果: {result.Message}");
+        }
     }
 
     [RelayCommand]
@@ -225,6 +246,13 @@ public partial class MainViewModel : ObservableObject
         var result = await _networkDiagnosticsService.CheckTcpPortAsync(TcpHost, TcpPort);
         NetworkResult = FormatResult(result);
         LogResult(result);
+
+        if (result.Success)
+        {
+            ShowDimseSuccessDialog(
+                "DIMSE 提示",
+                $"本机 C-STORE 自测已成功完成。\n目标: {result.Target}\n结果: {result.Message}");
+        }
     }
 
     [RelayCommand]
@@ -319,6 +347,12 @@ public partial class MainViewModel : ObservableObject
         OperationMessage = "Local IPv4 list refreshed";
     }
 
+    [RelayCommand]
+    private void ClearLogFilter()
+    {
+        LogFilterKeyword = string.Empty;
+    }
+
     private AppConfig BuildConfig()
     {
         return new AppConfig
@@ -350,6 +384,15 @@ public partial class MainViewModel : ObservableObject
             }
 
             CurrentLogFilePath = _logService.CurrentLogFilePath;
+            FilteredLogs.Refresh();
+
+            if (entry.Level == "Info" &&
+                string.Equals(entry.DimseInfo, "C-ECHO SCP", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowDimseSuccessDialog(
+                    "DIMSE 提示",
+                    "对端 C-ECHO 已成功完成，本机已返回成功响应。");
+            }
         });
     }
 
@@ -386,19 +429,28 @@ public partial class MainViewModel : ObservableObject
             {
                 ReceiveSessions.RemoveAt(ReceiveSessions.Count - 1);
             }
+
+            if (IsSuccessfulStoreSession(session) &&
+                _notifiedCompletedSessions.Add(session.SessionId))
+            {
+                ShowDimseSuccessDialog(
+                    "DIMSE 提示",
+                    $"C-STORE 接收会话已完成。\nCalling AE: {session.CallingAe}\n远端 IP: {session.RemoteIp}\n接收数量: {session.ReceivedCount}");
+            }
         });
     }
 
     private void LogResult(NetworkTestResult result)
     {
         var message = $"{result.TestType} {result.Target}: {result.Message}";
+        var dimseInfo = ResolveDimseInfo(result.TestType);
         if (result.Success)
         {
-            _logService.Info("Network", message);
+            _logService.Info("Network", message, dimseInfo);
         }
         else
         {
-            _logService.Warning("Network", message);
+            _logService.Warning("Network", message, dimseInfo);
         }
 
         OperationMessage = message;
@@ -429,6 +481,58 @@ public partial class MainViewModel : ObservableObject
     private static string FormatResult(NetworkTestResult result)
     {
         return $"{result.TestType} | {(result.Success ? "Success" : "Failed")} | {result.Target} | {result.Message} | {result.DurationMs} ms";
+    }
+
+    partial void OnLogFilterKeywordChanged(string value)
+    {
+        FilteredLogs.Refresh();
+        OnPropertyChanged(nameof(HasLogFilter));
+    }
+
+    private bool FilterLogEntry(object item)
+    {
+        if (item is not LogEntry entry)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(LogFilterKeyword))
+        {
+            return true;
+        }
+
+        return entry.Message.Contains(LogFilterKeyword, StringComparison.OrdinalIgnoreCase) ||
+               entry.Level.Contains(LogFilterKeyword, StringComparison.OrdinalIgnoreCase) ||
+               entry.Module.Contains(LogFilterKeyword, StringComparison.OrdinalIgnoreCase) ||
+               entry.DimseInfo.Contains(LogFilterKeyword, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ResolveDimseInfo(string testType)
+    {
+        return testType switch
+        {
+            "C-ECHO" => "C-ECHO SCU",
+            "C-STORE SelfTest" => "C-STORE SCU(SelfTest)",
+            "Ping" => "Network",
+            "TCP" => "Network",
+            _ => string.Empty
+        };
+    }
+
+    private static bool IsSuccessfulStoreSession(ReceiveSessionSummary session)
+    {
+        return session.ReceivedCount > 0 &&
+               (string.Equals(session.Status, "Completed", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(session.Status, "Closed", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void ShowDimseSuccessDialog(string title, string message)
+    {
+        global::System.Windows.MessageBox.Show(
+            message,
+            title,
+            global::System.Windows.MessageBoxButton.OK,
+            global::System.Windows.MessageBoxImage.Information);
     }
 
     private bool TryValidateStoreConfiguration(AppConfig config)

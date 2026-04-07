@@ -5,182 +5,571 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="StoreSCP 现场联调工具"
-        Height="860"
-        Width="1320"
-        MinHeight="800"
-        MinWidth="1220">
-    <Grid Background="#F3F6FB">
+        Width="1040"
+        Height="720"
+        MinWidth="760"
+        MinHeight="560"
+        Background="#F3F6FB"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+    <Window.Resources>
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="CornerRadius" Value="10" />
+        </Style>
+
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="Foreground" Value="#35516B" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="DataGridCellTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
+        </Style>
+
+        <Style x:Key="WrappedDataGridCellTextStyle"
+               TargetType="TextBlock"
+               BasedOn="{StaticResource DataGridCellTextStyle}">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,4,0,4" />
+        </Style>
+
+        <Style x:Key="SecondaryCellTextStyle"
+               TargetType="TextBlock"
+               BasedOn="{StaticResource DataGridCellTextStyle}">
+            <Setter Property="Foreground" Value="#5A748B" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+
+        <Style x:Key="ReadOnlyDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="CanUserReorderColumns" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="CanUserResizeColumns" Value="True" />
+            <Setter Property="CanUserSortColumns" Value="True" />
+            <Setter Property="EnableRowVirtualization" Value="True" />
+            <Setter Property="EnableColumnVirtualization" Value="True" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Background="#17324D" Padding="20">
-            <StackPanel>
-                <TextBlock FontSize="24" FontWeight="Bold" Foreground="White" Text="DICOM StoreSCP 现场联调工具" />
-                <TextBlock Margin="0,6,0,0" Foreground="#D5E0EA" Text="用于现场验证 CT 推送、网络连通性、C-ECHO 和本机 C-STORE 自测的 Windows 调试工具" />
-            </StackPanel>
+        <Border Background="#17324D" Padding="14,12">
+            <DockPanel LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left" MaxWidth="680">
+                    <TextBlock FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Text="DICOM StoreSCP 现场联调工具" />
+                    <TextBlock Margin="0,4,0,0"
+                               Foreground="#D5E0EA"
+                               TextWrapping="Wrap"
+                               Text="小屏优化版布局：左侧用于配置与测试，右侧优先查看会话、接收记录和日志。" />
+                </StackPanel>
+
+                <ToggleButton x:Name="SidebarToggleButton"
+                              DockPanel.Dock="Right"
+                              Margin="16,0,0,0"
+                              Padding="12,6"
+                              VerticalAlignment="Center"
+                              Checked="SidebarToggleButton_Checked"
+                              Unchecked="SidebarToggleButton_Unchecked"
+                              Content="隐藏左侧操作区" />
+            </DockPanel>
         </Border>
 
-        <Grid Grid.Row="1" Margin="16">
+        <Grid Grid.Row="1" Margin="14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="1.55*" />
+                <ColumnDefinition x:Name="SidebarColumn" Width="0.82*" MinWidth="260" />
+                <ColumnDefinition x:Name="SplitterColumn" Width="8" />
+                <ColumnDefinition Width="1.38*" MinWidth="420" />
             </Grid.ColumnDefinitions>
 
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="0,0,10,0">
-                    <Border Padding="16" Margin="0,0,0,12" Background="White" CornerRadius="10">
-                        <StackPanel>
-                            <TextBlock FontSize="18" FontWeight="SemiBold" Text="StoreSCP 监听" />
-                            <UniformGrid Margin="0,12,0,0" Columns="2">
-                                <StackPanel Margin="0,0,12,8">
-                                    <TextBlock Text="本地 AE Title" />
-                                    <TextBox Text="{Binding LocalAeTitle, UpdateSourceTrigger=PropertyChanged}" />
-                                </StackPanel>
-                                <StackPanel Margin="0,0,12,8">
-                                    <TextBlock Text="监听 IP" />
-                                    <DockPanel LastChildFill="True">
-                                        <Button Width="64"
-                                                Margin="8,0,0,0"
-                                                DockPanel.Dock="Right"
-                                                Padding="8,4"
-                                                Command="{Binding RefreshLocalAddressesCommand}"
-                                                Content="刷新" />
-                                        <ComboBox IsEditable="True"
-                                                  ItemsSource="{Binding AvailableListenIps}"
-                                                  Text="{Binding ListenIp, UpdateSourceTrigger=PropertyChanged}" />
-                                    </DockPanel>
-                                </StackPanel>
-                                <StackPanel Margin="0,0,12,8">
-                                    <TextBlock Text="监听端口" />
-                                    <TextBox Text="{Binding ListenPort, UpdateSourceTrigger=PropertyChanged}" />
-                                </StackPanel>
-                                <StackPanel Margin="0,0,12,8">
-                                    <TextBlock Text="接收目录" />
-                                    <TextBox Text="{Binding ReceiveDirectory, UpdateSourceTrigger=PropertyChanged}" />
-                                </StackPanel>
-                                <StackPanel Margin="0,0,12,8">
-                                    <TextBlock Text="日志目录" />
-                                    <TextBox Text="{Binding LogDirectory, UpdateSourceTrigger=PropertyChanged}" />
-                                </StackPanel>
-                            </UniformGrid>
+            <Grid x:Name="SidebarPane" Grid.Column="0" Margin="0,0,12,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                            <CheckBox Margin="0,4,0,0" Content="校验 Called AE" IsChecked="{Binding ValidateCalledAe}" />
-                            <TextBlock Margin="0,10,0,0" Foreground="#35516B" Text="{Binding StoreScpStatus, StringFormat=当前状态: {0}}" />
-                            <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="#35516B" Text="{Binding OperationMessage, StringFormat=操作提示: {0}}" />
-                            <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="#5A748B" Text="{Binding LocalAddresses, StringFormat=本机 IPv4: {0}}" />
-                            <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Foreground="#5A748B" Text="{Binding CurrentLogFilePath, StringFormat=当前日志文件: {0}}" />
-
-                            <StackPanel Margin="0,14,0,0" Orientation="Horizontal">
-                                <Button Width="120" Margin="0,0,10,0" Padding="10,6" Command="{Binding StartStoreScpCommand}" Content="启动监听" />
-                                <Button Width="120" Margin="0,0,10,0" Padding="10,6" Command="{Binding StopStoreScpCommand}" Content="停止监听" />
-                                <Button Width="120" Padding="10,6" Command="{Binding SaveConfigCommand}" Content="保存配置" />
-                            </StackPanel>
+                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="8"
+                                Margin="0,0,12,0"
+                                Background="#3A7BD5"
+                                CornerRadius="4" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Text="运行摘要" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Foreground="#35516B"
+                                       Text="{Binding StoreScpStatus, StringFormat=状态: {0}}" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Foreground="#35516B"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding OperationMessage, StringFormat=提示: {0}}" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Foreground="#5A748B"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding LocalAddresses, StringFormat=本机 IPv4: {0}}" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Foreground="#5A748B"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding CurrentLogFilePath, StringFormat=日志文件: {0}}" />
                         </StackPanel>
-                    </Border>
+                    </Grid>
+                </Border>
 
-                    <Border Padding="16" Margin="0,0,0,12" Background="White" CornerRadius="10">
-                        <StackPanel>
-                            <TextBlock FontSize="18" FontWeight="SemiBold" Text="网络与 DICOM 调试" />
-                            <TextBlock Margin="0,12,0,6" FontWeight="SemiBold" Text="Ping" />
-                            <DockPanel>
-                                <TextBox Width="280" Margin="0,0,10,0" Text="{Binding PingHost, UpdateSourceTrigger=PropertyChanged}" />
-                                <Button Width="110" Command="{Binding PingCommand}" Content="执行 Ping" />
-                            </DockPanel>
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+                    <TabControl>
+                        <TabItem Header="监听配置">
+                            <ScrollViewer Margin="4"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel>
+                                    <Grid Margin="0,2,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                            <TextBlock Margin="0,12,0,6" FontWeight="SemiBold" Text="TCP 端口检测" />
-                            <DockPanel>
-                                <TextBox Width="200" Margin="0,0,10,0" Text="{Binding TcpHost, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Width="80" Margin="0,0,10,0" Text="{Binding TcpPort, UpdateSourceTrigger=PropertyChanged}" />
-                                <Button Width="110" Command="{Binding CheckPortCommand}" Content="检测端口" />
-                            </DockPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="本地 AE Title" />
+                                            <TextBox Text="{Binding LocalAeTitle, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
 
-                            <TextBlock Margin="0,12,0,6" FontWeight="SemiBold" Text="DICOM C-ECHO" />
-                            <UniformGrid Columns="2">
-                                <TextBox Margin="0,0,10,8" Text="{Binding EchoHost, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Margin="0,0,10,8" Text="{Binding EchoPort, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Margin="0,0,10,8" Text="{Binding EchoCallingAeTitle, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Margin="0,0,10,8" Text="{Binding EchoCalledAeTitle, UpdateSourceTrigger=PropertyChanged}" />
-                            </UniformGrid>
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="监听端口" />
+                                            <TextBox Text="{Binding ListenPort, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
 
-                            <StackPanel Orientation="Horizontal">
-                                <Button Width="120" Margin="0,0,10,0" Command="{Binding EchoCommand}" Content="执行 C-ECHO" />
-                                <Button Width="140" Command="{Binding SelfTestStoreCommand}" Content="执行本机 C-STORE 自测" />
-                            </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,10">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="监听 IP" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ComboBox IsEditable="True"
+                                                          ItemsSource="{Binding AvailableListenIps}"
+                                                          Text="{Binding ListenIp, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Button Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        MinWidth="68"
+                                                        Padding="10,4"
+                                                        Command="{Binding RefreshLocalAddressesCommand}"
+                                                        Content="刷新" />
+                                            </Grid>
+                                        </StackPanel>
 
-                            <Border Margin="0,14,0,0" Padding="12" Background="#F7FAFD" CornerRadius="8">
-                                <TextBlock TextWrapping="Wrap" Text="{Binding NetworkResult}" />
-                            </Border>
-                        </StackPanel>
-                    </Border>
+                                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0,0,10">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="接收目录" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding ReceiveDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Button Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        MinWidth="68"
+                                                        Padding="10,4"
+                                                        Click="BrowseReceiveDirectoryButton_Click"
+                                                        Content="选择" />
+                                            </Grid>
+                                        </StackPanel>
 
-                    <Border Padding="16" Margin="0,0,0,12" Background="White" CornerRadius="10">
-                        <StackPanel>
-                            <TextBlock FontSize="18" FontWeight="SemiBold" Text="诊断导出" />
-                            <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" Foreground="#5A748B" Text="导出当前日志、配置快照、接收记录和会话统计，便于现场问题反馈。" />
-                            <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
-                                <Button Width="140" Command="{Binding ExportDiagnosticsCommand}" Content="导出诊断包" />
-                            </StackPanel>
-                            <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="#35516B" Text="{Binding DiagnosticBundlePath, StringFormat=最近导出目录: {0}}" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
+                                        <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="日志目录" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding LogDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Button Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        MinWidth="68"
+                                                        Padding="10,4"
+                                                        Click="BrowseLogDirectoryButton_Click"
+                                                        Content="选择" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
 
-            <Border Grid.Column="1" Margin="10,0,0,0" Padding="12" Background="White" CornerRadius="10">
-                <TabControl>
-                    <TabItem Header="会话统计">
-                        <ListView Margin="8" ItemsSource="{Binding ReceiveSessions}">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Width="70" Header="状态" DisplayMemberBinding="{Binding Status}" />
-                                    <GridViewColumn Width="130" Header="开始时间" DisplayMemberBinding="{Binding StartTime, StringFormat=yyyy-MM-dd HH:mm:ss}" />
-                                    <GridViewColumn Width="130" Header="结束时间" DisplayMemberBinding="{Binding EndTime, StringFormat=yyyy-MM-dd HH:mm:ss}" />
-                                    <GridViewColumn Width="85" Header="Calling AE" DisplayMemberBinding="{Binding CallingAe}" />
-                                    <GridViewColumn Width="100" Header="远端 IP" DisplayMemberBinding="{Binding RemoteIp}" />
-                                    <GridViewColumn Width="60" Header="数量" DisplayMemberBinding="{Binding ReceivedCount}" />
-                                    <GridViewColumn Width="200" Header="最后文件" DisplayMemberBinding="{Binding LastFilePath}" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                    </TabItem>
+                                    <CheckBox Margin="0,10,0,0"
+                                              Content="校验 Called AE"
+                                              IsChecked="{Binding ValidateCalledAe}" />
 
-                    <TabItem Header="接收记录">
-                        <ListView Margin="8" ItemsSource="{Binding ReceiveRecords}">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Width="130" Header="时间" DisplayMemberBinding="{Binding ReceivedAt, StringFormat=yyyy-MM-dd HH:mm:ss}" />
-                                    <GridViewColumn Width="90" Header="Calling AE" DisplayMemberBinding="{Binding CallingAe}" />
-                                    <GridViewColumn Width="110" Header="远端 IP" DisplayMemberBinding="{Binding RemoteIp}" />
-                                    <GridViewColumn Width="120" Header="患者" DisplayMemberBinding="{Binding PatientName}" />
-                                    <GridViewColumn Width="180" Header="Study UID" DisplayMemberBinding="{Binding StudyInstanceUid}" />
-                                    <GridViewColumn Width="240" Header="文件" DisplayMemberBinding="{Binding FilePath}" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                    </TabItem>
+                                    <WrapPanel Margin="0,14,0,0">
+                                        <Button MinWidth="116"
+                                                Margin="0,0,10,10"
+                                                Padding="12,6"
+                                                Command="{Binding StartStoreScpCommand}"
+                                                Content="启动监听" />
+                                        <Button MinWidth="116"
+                                                Margin="0,0,10,10"
+                                                Padding="12,6"
+                                                Command="{Binding StopStoreScpCommand}"
+                                                Content="停止监听" />
+                                        <Button MinWidth="116"
+                                                Margin="0,0,10,10"
+                                                Padding="12,6"
+                                                Command="{Binding SaveConfigCommand}"
+                                                Content="保存配置" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
 
-                    <TabItem Header="实时日志">
-                        <ListBox Margin="8" ItemsSource="{Binding Logs}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Padding="6" Margin="0,0,0,6" Background="#F8FAFC" CornerRadius="6">
-                                        <TextBlock TextWrapping="Wrap">
-                                            <Run Text="{Binding Timestamp, StringFormat=HH:mm:ss}" />
-                                            <Run Text="  " />
-                                            <Run Text="{Binding Level}" />
-                                            <Run Text="  " />
-                                            <Run Text="{Binding Module}" />
-                                            <Run Text="  " />
-                                            <Run Text="{Binding Message}" />
-                                        </TextBlock>
+                        <TabItem Header="网络调试">
+                            <ScrollViewer Margin="4"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" Text="Ping" />
+                                    <Grid Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Margin="0,0,10,0"
+                                                 Text="{Binding PingHost, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Button Grid.Column="1"
+                                                MinWidth="110"
+                                                Padding="12,6"
+                                                Command="{Binding PingCommand}"
+                                                Content="执行 Ping" />
+                                    </Grid>
+
+                                    <TextBlock Margin="0,14,0,0"
+                                               FontWeight="SemiBold"
+                                               Text="TCP 端口检测" />
+                                    <Grid Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Margin="0,0,10,0"
+                                                 Text="{Binding TcpHost, UpdateSourceTrigger=PropertyChanged}" />
+                                        <TextBox Grid.Column="1"
+                                                 Margin="0,0,10,0"
+                                                 Text="{Binding TcpPort, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Button Grid.Column="2"
+                                                MinWidth="110"
+                                                Padding="12,6"
+                                                Command="{Binding CheckPortCommand}"
+                                                Content="检测端口" />
+                                    </Grid>
+
+                                    <TextBlock Margin="0,14,0,0"
+                                               FontWeight="SemiBold"
+                                               Text="DICOM C-ECHO" />
+                                    <Grid Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,8">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="目标 IP / 主机名" />
+                                            <TextBox Text="{Binding EchoHost, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="目标端口" />
+                                            <TextBox Text="{Binding EchoPort, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Calling AE" />
+                                            <TextBox Text="{Binding EchoCallingAeTitle, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Row="1" Grid.Column="1">
+                                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Called AE" />
+                                            <TextBox Text="{Binding EchoCalledAeTitle, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <WrapPanel Margin="0,14,0,0">
+                                        <Button MinWidth="120"
+                                                Margin="0,0,10,10"
+                                                Padding="12,6"
+                                                Command="{Binding EchoCommand}"
+                                                Content="执行 C-ECHO" />
+                                        <Button MinWidth="150"
+                                                Margin="0,0,10,10"
+                                                Padding="12,6"
+                                                Command="{Binding SelfTestStoreCommand}"
+                                                Content="本机 C-STORE 自测" />
+                                    </WrapPanel>
+
+                                    <Border Margin="0,4,0,0"
+                                            Padding="12"
+                                            Background="#F7FAFD"
+                                            CornerRadius="8">
+                                        <TextBlock Text="{Binding NetworkResult}" TextWrapping="Wrap" />
                                     </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </TabItem>
-                </TabControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Header="诊断导出">
+                            <StackPanel Margin="4">
+                                <TextBlock Foreground="#35516B"
+                                           TextWrapping="Wrap"
+                                           Text="导出当前日志、配置快照、接收记录和会话统计，便于现场反馈问题。" />
+                                <WrapPanel Margin="0,14,0,0">
+                                    <Button MinWidth="140"
+                                            Margin="0,0,10,10"
+                                            Padding="12,6"
+                                            Command="{Binding ExportDiagnosticsCommand}"
+                                            Content="导出诊断包" />
+                                </WrapPanel>
+                                <TextBlock Margin="0,6,0,0"
+                                           Foreground="#5A748B"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding DiagnosticBundlePath, StringFormat=最近导出目录: {0}}" />
+                            </StackPanel>
+                        </TabItem>
+                    </TabControl>
+                </Border>
+            </Grid>
+
+            <GridSplitter x:Name="PaneSplitter"
+                          Grid.Column="1"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="#D8E2EE"
+                          ShowsPreview="True" />
+
+            <Border Grid.Column="2"
+                    Padding="12"
+                    Background="White"
+                    CornerRadius="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock DockPanel.Dock="Left"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Text="数据视图" />
+                        <TextBlock DockPanel.Dock="Right"
+                                   Foreground="#5A748B"
+                                   Text="可拖拽列宽，支持横向滚动" />
+                    </DockPanel>
+
+                    <TabControl Grid.Row="1">
+                        <TabItem Header="会话统计">
+                            <DataGrid Margin="4"
+                                      Style="{StaticResource ReadOnlyDataGridStyle}"
+                                      ItemsSource="{Binding ReceiveSessions}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="88"
+                                                        Binding="{Binding Status}"
+                                                        Header="状态"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTemplateColumn Width="220"
+                                                            Header="时间范围">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,4,0,4">
+                                                    <TextBlock Text="{Binding StartTime, StringFormat=开始: yyyy-MM-dd HH:mm:ss}"
+                                                               Style="{StaticResource DataGridCellTextStyle}" />
+                                                    <TextBlock Text="{Binding EndTime, TargetNullValue=结束: -, StringFormat=结束: {0:yyyy-MM-dd HH:mm:ss}}"
+                                                               Style="{StaticResource SecondaryCellTextStyle}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Width="220"
+                                                            Header="对端信息">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,4,0,4">
+                                                    <TextBlock Text="{Binding CallingAe, StringFormat=Calling: {0}}"
+                                                               Style="{StaticResource DataGridCellTextStyle}" />
+                                                    <TextBlock Text="{Binding CalledAe, StringFormat=Called: {0}}"
+                                                               Style="{StaticResource SecondaryCellTextStyle}" />
+                                                    <TextBlock Text="{Binding RemoteIp, StringFormat=远端 IP: {0}}"
+                                                               Style="{StaticResource SecondaryCellTextStyle}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Width="*"
+                                                            MinWidth="260"
+                                                            Header="接收摘要">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,4,0,4">
+                                                    <TextBlock Text="{Binding ReceivedCount, StringFormat=接收数量: {0}}"
+                                                               Style="{StaticResource DataGridCellTextStyle}" />
+                                                    <TextBlock Text="{Binding LastFilePath, StringFormat=最后文件: {0}}"
+                                                               Style="{StaticResource WrappedDataGridCellTextStyle}" />
+                                                    <TextBlock Text="{Binding ErrorMessage, StringFormat=异常: {0}}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource WrappedDataGridCellTextStyle}">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding ErrorMessage}" Value="">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
+
+                        <TabItem Header="接收记录">
+                            <DataGrid x:Name="ReceiveRecordsDataGrid"
+                                      Margin="4"
+                                      Style="{StaticResource ReadOnlyDataGridStyle}"
+                                      ItemsSource="{Binding ReceiveRecords}"
+                                      SelectedItem="{Binding SelectedReceiveRecord}"
+                                      MouseDoubleClick="ReceiveRecordsDataGrid_MouseDoubleClick">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="148"
+                                                        Binding="{Binding ReceivedAt, StringFormat=yyyy-MM-dd HH:mm:ss}"
+                                                        Header="时间"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTextColumn Width="96"
+                                                        Binding="{Binding CallingAe}"
+                                                        Header="Calling AE"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTextColumn Width="96"
+                                                        Binding="{Binding CalledAe}"
+                                                        Header="Called AE"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTextColumn Width="114"
+                                                        Binding="{Binding RemoteIp}"
+                                                        Header="远端 IP"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTextColumn Width="120"
+                                                        Binding="{Binding PatientName}"
+                                                        Header="患者"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTextColumn Width="170"
+                                                        Binding="{Binding StudyInstanceUid}"
+                                                        Header="Study UID"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTextColumn Width="170"
+                                                        Binding="{Binding SopInstanceUid}"
+                                                        Header="SOP UID"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                    <DataGridTextColumn Width="*"
+                                                        MinWidth="220"
+                                                        Binding="{Binding FilePath}"
+                                                        Header="文件"
+                                                        ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </TabItem>
+
+                        <TabItem Header="实时日志">
+                            <Grid Margin="4">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Margin="0,0,10,0"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding LogFilterKeyword, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Button Grid.Column="1"
+                                            MinWidth="90"
+                                            Padding="12,6"
+                                            Command="{Binding ClearLogFilterCommand}"
+                                            Content="清空筛选" />
+                                </Grid>
+
+                                <DataGrid Grid.Row="1"
+                                          Style="{StaticResource ReadOnlyDataGridStyle}"
+                                          ItemsSource="{Binding FilteredLogs}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Width="80"
+                                                            Binding="{Binding Timestamp, StringFormat=HH:mm:ss}"
+                                                            Header="时间"
+                                                            ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                        <DataGridTextColumn Width="82"
+                                                            Binding="{Binding Level}"
+                                                            Header="级别"
+                                                            ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                        <DataGridTextColumn Width="108"
+                                                            Binding="{Binding Module}"
+                                                            Header="模块"
+                                                            ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                        <DataGridTextColumn Width="118"
+                                                            Binding="{Binding DimseInfo}"
+                                                            Header="DIMSE信息"
+                                                            ElementStyle="{StaticResource DataGridCellTextStyle}" />
+                                        <DataGridTemplateColumn Width="*"
+                                                                MinWidth="220"
+                                                                Header="消息">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Message}"
+                                                               Style="{StaticResource WrappedDataGridCellTextStyle}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

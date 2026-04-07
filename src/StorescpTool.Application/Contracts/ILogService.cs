@@ -8,7 +8,7 @@ public interface ILogService
     string CurrentLogFilePath { get; }
     IReadOnlyList<LogEntry> GetEntries();
     void SetLogDirectory(string directoryPath);
-    void Info(string module, string message);
-    void Warning(string module, string message);
-    void Error(string module, string message, Exception? exception = null);
+    void Info(string module, string message, string dimseInfo = "");
+    void Warning(string module, string message, string dimseInfo = "");
+    void Error(string module, string message, Exception? exception = null, string dimseInfo = "");
 }

@@ -1,0 +1,81 @@
+<Window x:Class="StorescpTool.App.ReceiveRecordDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="接收记录详情"
+        Width="760"
+        Height="520"
+        MinWidth="620"
+        MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Background="#F6F8FC">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="16"
+                Background="White"
+                CornerRadius="10">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Margin="0,0,12,10" VerticalAlignment="Center" FontWeight="SemiBold" Text="接收时间" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,10" IsReadOnly="True" Text="{Binding ReceivedAt, StringFormat=yyyy-MM-dd HH:mm:ss}" />
+
+                    <TextBlock Grid.Row="1" Margin="0,0,12,10" VerticalAlignment="Center" FontWeight="SemiBold" Text="Calling AE" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,10" IsReadOnly="True" Text="{Binding CallingAe}" />
+
+                    <TextBlock Grid.Row="2" Margin="0,0,12,10" VerticalAlignment="Center" FontWeight="SemiBold" Text="Called AE" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Margin="0,0,0,10" IsReadOnly="True" Text="{Binding CalledAe}" />
+
+                    <TextBlock Grid.Row="3" Margin="0,0,12,10" VerticalAlignment="Center" FontWeight="SemiBold" Text="远端 IP" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" IsReadOnly="True" Text="{Binding RemoteIp}" />
+
+                    <TextBlock Grid.Row="4" Margin="0,0,12,10" VerticalAlignment="Center" FontWeight="SemiBold" Text="患者姓名" />
+                    <TextBox Grid.Row="4" Grid.Column="1" Margin="0,0,0,10" IsReadOnly="True" Text="{Binding PatientName}" />
+
+                    <TextBlock Grid.Row="5" Margin="0,0,12,10" VerticalAlignment="Center" FontWeight="SemiBold" Text="Study UID" />
+                    <TextBox Grid.Row="5" Grid.Column="1" Margin="0,0,0,10" IsReadOnly="True" Text="{Binding StudyInstanceUid}" />
+
+                    <TextBlock Grid.Row="6" Margin="0,0,12,10" VerticalAlignment="Center" FontWeight="SemiBold" Text="SOP UID" />
+                    <TextBox Grid.Row="6" Grid.Column="1" Margin="0,0,0,10" IsReadOnly="True" Text="{Binding SopInstanceUid}" />
+
+                    <TextBlock Grid.Row="7" Margin="0,0,12,0" VerticalAlignment="Top" FontWeight="SemiBold" Text="文件路径" />
+                    <TextBox Grid.Row="7"
+                             Grid.Column="1"
+                             MinHeight="96"
+                             IsReadOnly="True"
+                             Text="{Binding FilePath}"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             AcceptsReturn="True" />
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <StackPanel Grid.Row="1"
+                    Margin="0,12,0,0"
+                    HorizontalAlignment="Right"
+                    Orientation="Horizontal">
+            <Button MinWidth="96"
+                    Padding="12,6"
+                    Click="CloseButton_Click"
+                    Content="关闭" />
+        </StackPanel>
+    </Grid>
+</Window>
